@@ -327,19 +327,19 @@ export default function ScriptPlanner() {
             return (
               <div key={section.id} className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
                 {/* Section Header */}
-                <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
+                <div className="flex items-center justify-between bg-neutral-700 px-5 py-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-neutral-400">#{index + 1}</span>
-                    <h3 className="font-medium text-neutral-900">{section.name}</h3>
+                    <span className="text-sm font-medium text-neutral-300">#{index + 1}</span>
+                    <h3 className="font-bold text-white">{section.name}</h3>
                     {!section.hasInput && !section.hasKeywords && !section.hasObjectives && (
-                      <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">자동</span>
+                      <span className="rounded bg-neutral-600 px-2 py-0.5 text-xs text-neutral-200">자동</span>
                     )}
-                    {section.note && <span className="text-xs text-neutral-400">{section.note}</span>}
+                    {section.note && <span className="text-xs text-neutral-300">{section.note}</span>}
                   </div>
                   <div className="text-right">
                     <span
                       className={`text-sm font-medium ${
-                        percent > 100 ? "text-red-500" : percent >= 95 ? "text-green-500" : "text-neutral-500"
+                        percent > 100 ? "text-red-400" : percent >= 95 ? "text-green-400" : "text-neutral-300"
                       }`}
                     >
                       {formatTime(duration)} / {formatTime(section.target)} / <span className="font-bold">{percent}%</span>
@@ -483,7 +483,7 @@ export default function ScriptPlanner() {
         </div>
 
         {/* Download Button */}
-        <div className="mt-8 flex justify-center">
+        <div className="mt-8 flex flex-col items-center">
           <button
             onClick={downloadPDF}
             className="flex items-center gap-2 rounded-lg bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-800"
@@ -491,6 +491,7 @@ export default function ScriptPlanner() {
             <Download className="h-4 w-4" />
             PDF 다운로드
           </button>
+          <p className="mt-3 text-xs text-neutral-400">다운로드 버튼 클릭 후 약 3초 정도 후에 다운로드가 진행됩니다.</p>
         </div>
       </main>
 
