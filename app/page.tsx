@@ -249,7 +249,8 @@ export default function ScriptPlanner() {
         <p className="mt-1 text-sm text-neutral-500">재난영화로 알아보는 직업이야기</p>
       </div>
       
-        href="/guide"
+      <a  
+      href="/guide"
         target="_blank"
         rel="noopener noreferrer"
         className="rounded-lg border-2 border-neutral-900 bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
