@@ -511,9 +511,9 @@ export default function GuidePage() {
         <div className="section-card">
           <div className="section-header">
             <span className="section-icon">👋</span>
-            안녕하세요, 집필자님!
+            안녕하세요, 교수님!
           </div>
-          <p>"재난영화로 알아보는 직업이야기" 이러닝 콘텐츠 제작을 위한 <strong>나레이션 원고 작성 사이트</strong>가 개발되었습니다.</p>
+          <p>"재난영화로 알아보는 직업이야기" 이러닝 콘텐츠 제작을 위한 <strong>나레이션 원고 작성 사이트</strong>를 개발했습니다.</p>
           <p style={{ marginTop: '10px' }}>효율적인 원고 작성을 위해 아래 가이드를 참고해 주세요.</p>
         </div>
 
