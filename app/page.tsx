@@ -241,7 +241,7 @@ export default function ScriptPlanner() {
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-      <header className="border-b border-neutral-200 bg-white">
+<header className="border-b border-neutral-200 bg-white">
   <div className="mx-auto max-w-4xl px-6 py-8">
     <div className="flex items-center justify-between">
       <div>
