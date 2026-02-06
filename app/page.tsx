@@ -242,11 +242,23 @@ export default function ScriptPlanner() {
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto max-w-4xl px-6 py-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">나레이션 원고 작성</h1>
-          <p className="mt-1 text-sm text-neutral-500">재난영화로 알아보는 직업이야기</p>
-        </div>
-      </header>
+  <div className="mx-auto max-w-4xl px-6 py-8">
+    <div className="flex items-center justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">나레이션 원고 작성</h1>
+        <p className="mt-1 text-sm text-neutral-500">재난영화로 알아보는 직업이야기</p>
+      </div>
+      
+        href="/guide"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="rounded-lg border-2 border-neutral-900 bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
+      >
+        📖 작성가이드 보기
+      </a>
+    </div>
+  </div>
+</header>
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         {/* Week Info */}
