@@ -25,7 +25,7 @@ const EP1_SECTIONS: Section[] = [
   { id: "guide", name: "영화시청 가이드 (영화소개)", target: 120, hasInput: true },
   { id: "movie", name: "영화 하이라이트", target: 900, hasInput: true, note: "줄거리는 AI음성으로 대체" },
   { id: "analysis", name: "영화시청 후 분석", target: 270, hasInput: true },
-  { id: "preview", name: "다음차시 예고", target: 60, hasInput: true },
+  { id: "preview", name: "다음차시 예고", target: 50, hasInput: true },
   { id: "summary", name: "정리하기", target: 30, hasInput: true, note: "AI음성" },
   { id: "logo2", name: "로고영상", target: 10, hasInput: false },
 ]
@@ -36,7 +36,7 @@ const EP2_SECTIONS: Section[] = [
   { id: "intro", name: "강의 시작멘트", target: 60, hasInput: true },
   { id: "objectives", name: "학습목표/학습내용", target: 20, hasInput: false, hasObjectives: true, note: "디자인 페이지" },
   { id: "lecture", name: "본강의", target: 720, hasInput: true, note: "크로마키+PPT" },
-  { id: "interview", name: "전문가 인터뷰", target: 600, hasInput: false, hasInterview: true },
+  { id: "interview", name: "전문가 인터뷰", target: 500, hasInput: false, hasInterview: true },
   { id: "closing", name: "마무리멘트", target: 120, hasInput: true },
   { id: "summary", name: "정리하기", target: 30, hasInput: true, note: "AI음성" },
   { id: "logo2", name: "로고영상", target: 10, hasInput: false },
