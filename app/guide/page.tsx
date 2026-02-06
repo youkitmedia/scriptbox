@@ -553,7 +553,7 @@ export default function GuidePage() {
         {/* 사이트 접속 방법 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">🌐</span>
+            <strong>2.</strong>
             사이트 접속 방법
           </div>
           
@@ -575,7 +575,7 @@ export default function GuidePage() {
         {/* 러닝타임 작성 기준 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">⏱️</span>
+            <strong>3.</strong>
             러닝타임 작성 기준
           </div>
           
@@ -620,7 +620,7 @@ export default function GuidePage() {
         {/* 차시별 구조 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">📺</span>
+            <strong>4.</strong>
             차시별 구조 및 러닝타임
           </div>
           
@@ -801,7 +801,7 @@ export default function GuidePage() {
         {/* 섹션별 작성 요령 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">✍️</span>
+            <strong>5.</strong>
             섹션별 작성 요령
           </div>
           
@@ -917,7 +917,7 @@ export default function GuidePage() {
         {/* 저장 방법 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">💾</span>
+            <strong>6.</strong>
             저장 방법
           </div>
           
@@ -941,7 +941,7 @@ export default function GuidePage() {
         {/* 체크리스트 */}
         <div className="section-card">
           <div className="section-header">
-            <span className="section-icon">✨</span>
+            <strong>7.</strong>
             작성 완료 체크리스트
           </div>
           
