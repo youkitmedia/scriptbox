@@ -73,6 +73,29 @@ export default function ScriptPlanner() {
     return Math.ceil(text.replace(/\s/g, "").length / CHARS_PER_SECOND)
   }
 
+  // 2차시 전문가 인터뷰 목표 시간 동적 계산
+  const calculateEP2InterviewTarget = () => {
+    if (episode !== 2) return 500
+    
+    // 기본 목표 시간
+    const LECTURE_TARGET = 720    // #5 본강의 목표: 12분
+    const CLOSING_TARGET = 120    // #7 마무리멘트 목표: 2분
+    const INTERVIEW_BASE = 500    // #6 전문가 인터뷰 기본: 8분 20초
+    
+    // 실제 작성 시간
+    const lectureActual = calculateDuration(scripts[2]["lecture"] || "")
+    const closingActual = calculateDuration(scripts[2]["closing"] || "")
+    
+    // 목표 대비 초과분 계산 (음수면 0)
+    const lectureOverflow = Math.max(0, lectureActual - LECTURE_TARGET)
+    const closingOverflow = Math.max(0, closingActual - CLOSING_TARGET)
+    
+    // 인터뷰 시간 = 기본값 - 초과분들
+    const interviewTarget = INTERVIEW_BASE - lectureOverflow - closingOverflow
+    
+    return Math.max(0, interviewTarget) // 음수 방지
+  }
+
   const updateScript = (sectionId: string, text: string) => {
     setScripts((prev) => ({ ...prev, [episode]: { ...prev[episode], [sectionId]: text } }))
   }
@@ -106,6 +129,9 @@ export default function ScriptPlanner() {
       if (section.hasInput) {
         return total + calculateDuration(scripts[episode][section.id] || "")
       }
+      if (section.hasInterview && episode === 2) {
+        return total + calculateEP2InterviewTarget()
+      }
       return total + section.target
     }, 0)
   }
@@ -137,39 +163,32 @@ export default function ScriptPlanner() {
     const pdfWidth = pdf.internal.pageSize.getWidth()
     const pdfHeight = pdf.internal.pageSize.getHeight()
     
-    // 페이지 여백 설정 (상하좌우)
     const marginX = 10
     const marginY = 15
     const contentWidth = pdfWidth - marginX * 2
     const contentHeight = pdfHeight - marginY * 2
     
-    // 캔버스를 PDF 콘텐츠 영역에 맞게 스케일 계산
     const scale = contentWidth / canvas.width
     const scaledPageHeight = contentHeight / scale
     
-    // 빈 줄(흰색 행)을 찾는 함수 - 텍스트가 잘리지 않는 위치 탐색
     const findBestBreakPoint = (targetY: number, searchRange: number): number => {
       const ctx = canvas.getContext("2d")
       if (!ctx) return targetY
       
-      // 목표 위치에서 위쪽으로 searchRange 픽셀 범위 내에서 빈 줄 찾기
       const startY = Math.max(0, Math.floor(targetY - searchRange))
       const endY = Math.floor(targetY)
       
-      // 아래에서 위로 스캔하여 가장 가까운 빈 줄 찾기
       for (let y = endY; y >= startY; y--) {
         const imageData = ctx.getImageData(0, y, canvas.width, 1)
         const data = imageData.data
         let isWhiteRow = true
         
-        // 해당 행의 모든 픽셀이 흰색(또는 거의 흰색)인지 확인
         for (let x = 0; x < canvas.width; x++) {
           const idx = x * 4
           const r = data[idx]
           const g = data[idx + 1]
           const b = data[idx + 2]
           
-          // RGB 모두 250 이상이면 흰색으로 간주
           if (r < 250 || g < 250 || b < 250) {
             isWhiteRow = false
             break
@@ -181,11 +200,9 @@ export default function ScriptPlanner() {
         }
       }
       
-      // 빈 줄을 찾지 못하면 원래 위치 반환
       return targetY
     }
     
-    // 페이지 분할 위치 계산
     const pageBreaks: number[] = [0]
     let currentY = 0
     
@@ -193,18 +210,15 @@ export default function ScriptPlanner() {
       const nextTargetY = currentY + scaledPageHeight
       
       if (nextTargetY >= canvas.height) {
-        // 마지막 페이지
         pageBreaks.push(canvas.height)
         break
       }
       
-      // 텍스트가 잘리지 않는 최적의 분할 위치 찾기 (100픽셀 범위 내에서)
       const bestBreakY = findBestBreakPoint(nextTargetY, 100)
       pageBreaks.push(bestBreakY)
       currentY = bestBreakY
     }
     
-    // 각 페이지 생성
     for (let i = 0; i < pageBreaks.length - 1; i++) {
       if (i > 0) {
         pdf.addPage()
@@ -213,7 +227,6 @@ export default function ScriptPlanner() {
       const sourceY = pageBreaks[i]
       const sourceHeight = pageBreaks[i + 1] - pageBreaks[i]
       
-      // 페이지별로 캔버스를 잘라서 새 캔버스 생성
       const pageCanvas = document.createElement("canvas")
       pageCanvas.width = canvas.width
       pageCanvas.height = sourceHeight
@@ -238,28 +251,29 @@ export default function ScriptPlanner() {
     pdf.save(`${weekNumber || "원고"}_${weekTitle || ""}_${episode}차시.pdf`)
   }
 
+  const interviewDynamicTarget = calculateEP2InterviewTarget()
+
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Header */}
-<header className="border-b border-neutral-200 bg-white">
-  <div className="mx-auto max-w-4xl px-6 py-8">
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">나레이션 원고 작성</h1>
-        <p className="mt-1 text-sm text-neutral-500">재난영화로 알아보는 직업이야기</p>
-      </div>
-      
-      <a  
-      href="/guide"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="rounded-lg border-2 border-neutral-900 bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
-      >
-        📖 작성가이드 보기
-      </a>
-    </div>
-  </div>
-</header>
+      <header className="border-b border-neutral-200 bg-white">
+        <div className="mx-auto max-w-4xl px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">나레이션 원고 작성</h1>
+              <p className="mt-1 text-sm text-neutral-500">재난영화로 알아보는 직업이야기</p>
+            </div>
+            <a
+              href="/guide"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border-2 border-neutral-900 bg-white px-5 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
+            >
+              📖 작성가이드 보기
+            </a>
+          </div>
+        </div>
+      </header>
 
       <main className="mx-auto max-w-4xl px-6 py-8">
         {/* Week Info */}
@@ -311,7 +325,7 @@ export default function ScriptPlanner() {
             </div>
             <div
               className={`text-3xl font-bold ${
-                totalPercent > 100 ? "text-red-500" : totalPercent >= 95 ? "text-green-500" : "text-neutral-400"
+                totalPercent > 105 ? "text-red-500" : totalPercent >= 95 ? "text-green-500" : "text-neutral-400"
               }`}
             >
               {totalPercent}%
@@ -320,12 +334,12 @@ export default function ScriptPlanner() {
           <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
             <div
               className={`h-full transition-all duration-300 ${
-                totalPercent > 100 ? "bg-red-500" : totalPercent >= 95 ? "bg-green-500" : "bg-neutral-900"
+                totalPercent > 105 ? "bg-red-500" : totalPercent >= 95 ? "bg-green-500" : "bg-neutral-900"
               }`}
               style={{ width: `${Math.min(totalPercent, 100)}%` }}
             />
           </div>
-          {totalPercent > 100 && (
+          {totalPercent > 105 && (
             <p className="mt-3 text-sm text-red-500">{formatTime(totalActual - totalTarget)} 초과</p>
           )}
         </div>
@@ -335,7 +349,43 @@ export default function ScriptPlanner() {
           {sections.map((section, index) => {
             const script = scripts[episode][section.id] || ""
             const duration = section.hasInput ? calculateDuration(script) : section.target
-            const percent = Math.round((duration / section.target) * 100)
+            
+            // 디폴트 목표 시간은 항상 원본 유지
+            const displayTarget = section.target
+            
+            // 2차시 인터뷰만 동적 계산 시간 사용
+            const actualTarget = section.hasInterview && episode === 2 
+              ? interviewDynamicTarget 
+              : section.target
+            
+            const percent = Math.round((duration / displayTarget) * 100)
+            
+            // 색상 로직
+            let percentColor = "text-neutral-300"
+            let barColor = "bg-neutral-300"
+            
+            if (section.id === "lecture" && episode === 2) {
+              // #5 본강의: 항상 녹색
+              percentColor = "text-green-400"
+              barColor = "bg-green-500"
+            } else if (section.id === "closing" && episode === 2) {
+              // #7 마무리멘트: 항상 녹색
+              percentColor = "text-green-400"
+              barColor = "bg-green-500"
+            } else if (section.hasInterview && episode === 2) {
+              // #6 전문가 인터뷰: 오렌지색
+              percentColor = "text-orange-400"
+              barColor = "bg-orange-500"
+            } else {
+              // 나머지: 기존 로직
+              if (percent > 105) {
+                percentColor = "text-red-400"
+                barColor = "bg-red-500"
+              } else if (percent >= 95) {
+                percentColor = "text-green-400"
+                barColor = "bg-green-500"
+              }
+            }
 
             return (
               <div key={section.id} className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
@@ -344,18 +394,17 @@ export default function ScriptPlanner() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-neutral-300">#{index + 1}</span>
                     <h3 className="font-bold text-white">{section.name}</h3>
-                    {!section.hasInput && !section.hasKeywords && !section.hasObjectives && (
+                    {!section.hasInput && !section.hasKeywords && !section.hasObjectives && !section.hasInterview && (
                       <span className="rounded bg-neutral-600 px-2 py-0.5 text-xs text-neutral-200">자동</span>
+                    )}
+                    {section.hasInterview && episode === 2 && (
+                      <span className="rounded bg-orange-600 px-2 py-0.5 text-xs text-white">자동 조정</span>
                     )}
                     {section.note && <span className="text-xs text-neutral-300">{section.note}</span>}
                   </div>
                   <div className="text-right">
-                    <span
-                      className={`text-sm font-medium ${
-                        percent > 100 ? "text-red-400" : percent >= 95 ? "text-green-400" : "text-neutral-300"
-                      }`}
-                    >
-                      {formatTime(duration)} / {formatTime(section.target)} / <span className="font-bold">{percent}%</span>
+                    <span className={`text-sm font-medium ${percentColor}`}>
+                      {formatTime(duration)} / {formatTime(displayTarget)} / <span className="font-bold">{percent}%</span>
                     </span>
                   </div>
                 </div>
@@ -363,9 +412,7 @@ export default function ScriptPlanner() {
                 {/* Progress Bar */}
                 <div className="h-1 bg-neutral-50">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      percent > 100 ? "bg-red-500" : percent >= 95 ? "bg-green-500" : "bg-neutral-300"
-                    }`}
+                    className={`h-full transition-all duration-300 ${barColor}`}
                     style={{ width: `${Math.min(percent, 100)}%` }}
                   />
                 </div>
@@ -376,13 +423,23 @@ export default function ScriptPlanner() {
                     <textarea
                       value={script}
                       onChange={(e) => updateScript(section.id, e.target.value)}
-                      placeholder={`원고를 입력하세요 (목표: ${formatTime(section.target)}, 약 ${Math.round(section.target * CHARS_PER_SECOND)}자)`}
+                      placeholder={`원고를 입력하세요 (목표: ${formatTime(displayTarget)}, 약 ${Math.round(displayTarget * CHARS_PER_SECOND)}자)`}
                       className="min-h-32 w-full resize-y rounded-lg border border-neutral-200 p-4 text-sm leading-relaxed outline-none transition-colors placeholder:text-neutral-400 focus:border-neutral-400"
                     />
                     <div className="mt-2 flex items-center justify-between text-xs text-neutral-400">
                       <span>{script.replace(/\s/g, "").length}자</span>
-                      {percent > 100 && <span className="text-red-500">{formatTime(duration - section.target)} 초과</span>}
-                      {percent >= 95 && percent <= 100 && <span className="text-green-500">적정</span>}
+                      {section.id === "lecture" && episode === 2 && (
+                        <span className="text-green-600">💡 텍스트 분량이 늘어날 경우 인터뷰 항목의 시간이 자동으로 조절됩니다.</span>
+                      )}
+                      {section.id === "closing" && episode === 2 && (
+                        <span className="text-green-600">💡 텍스트 분량이 늘어날 경우 인터뷰 항목의 시간이 자동으로 조절됩니다.</span>
+                      )}
+                      {section.id !== "lecture" && section.id !== "closing" && (
+                        <>
+                          {percent > 105 && <span className="text-red-500">{formatTime(duration - displayTarget)} 초과</span>}
+                          {percent >= 95 && percent <= 105 && <span className="text-green-500">적정</span>}
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
@@ -427,6 +484,31 @@ export default function ScriptPlanner() {
                 {/* Interview */}
                 {section.hasInterview && (
                   <div className="border-t border-neutral-100 p-5">
+                    {episode === 2 && (
+                      <div className="mb-4 rounded-lg border-2 border-orange-300 bg-orange-50 p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">📊</span>
+                          <h4 className="font-bold text-orange-900">자동 계산된 목표 시간</h4>
+                        </div>
+                        <p className="text-3xl font-bold text-orange-600">
+                          {formatTime(interviewDynamicTarget)}
+                        </p>
+                        <p className="text-sm text-orange-700 mt-2">
+                          💡 #5 본강의와 #7 마무리멘트의 분량을 조정하면 이 시간이 자동으로 변경됩니다
+                        </p>
+                        {interviewDynamicTarget < 300 && (
+                          <p className="text-sm text-red-600 mt-2 font-medium">
+                            ⚠️ 인터뷰 시간이 5분 미만입니다. #5나 #7을 줄여주세요
+                          </p>
+                        )}
+                        {interviewDynamicTarget > 600 && (
+                          <p className="text-sm text-amber-600 mt-2 font-medium">
+                            ⚠️ 인터뷰 시간이 10분 이상입니다. #5나 #7을 늘려주세요
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
                     <div className="space-y-4">
                       <div>
                         <label className="mb-2 block text-sm font-medium text-neutral-700">영상내용</label>
@@ -438,7 +520,9 @@ export default function ScriptPlanner() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-neutral-700">영상출처</label>
+                        <label className="mb-2 block text-sm font-medium text-neutral-700">
+                          영상출처 {episode === 2 && <span className="text-xs text-orange-600">(실제 영상 길이를 참고하세요)</span>}
+                        </label>
                         <input
                           type="text"
                           value={interviews[episode][section.id]?.source || ""}
@@ -488,8 +572,9 @@ export default function ScriptPlanner() {
             <li><strong>오픈훅 키워드:</strong> 영상 시작 부분에 표현할 직업의 핵심 특성 5가지 이내로 입력하세요</li>
             <li><strong>학습목표/학습내용:</strong> 디자인 페이지에 표시될 학습목표와 학습내용을 입력하세요</li>
             <li><strong>나레이션 원고:</strong> 각 섹션의 목표 시간에 맞춰 원고를 작성하세요</li>
+            <li><strong>2차시 전문가 인터뷰:</strong> #5 본강의와 #7 마무리멘트 작성에 따라 목표 시간이 자동 계산됩니다</li>
             <li>한글 기준 2분당 725자 (초당 약 6자)로 자동 계산됩니다</li>
-            <li>95~100%가 적정 분량이며, 100% 초과 시 원고를 줄여주세요</li>
+            <li>95~105%가 적정 분량이며, 105% 초과 시 원고를 줄여주세요</li>
             <li>실시간으로 러닝타임이 계산되어 촬영 전 정확한 분량 조절이 가능합니다</li>
             <li>작성한 원고는 브라우저에 자동 저장되지 않으니 PDF저장을 통해 별도로 저장해주세요</li>
           </ul>
@@ -536,8 +621,13 @@ export default function ScriptPlanner() {
             {sections.map((section, index) => {
               const script = scripts[episode][section.id] || ""
               const duration = section.hasInput ? calculateDuration(script) : section.target
-
-              const sectionPercent = Math.round((duration / section.target) * 100)
+              
+              const displayTarget = section.target
+              const actualTarget = section.hasInterview && episode === 2 
+                ? interviewDynamicTarget 
+                : section.target
+              
+              const sectionPercent = Math.round((duration / displayTarget) * 100)
 
               return (
                 <div key={section.id} className="border-b border-neutral-100 pb-6">
@@ -546,7 +636,7 @@ export default function ScriptPlanner() {
                     {section.note && <span className="text-sm text-neutral-500">({section.note})</span>}
                   </div>
                   <p className="mb-3 text-sm text-neutral-500">
-                    {formatTime(duration)} / {formatTime(section.target)} / <span className="font-bold">{sectionPercent}%</span>
+                    {formatTime(duration)} / {formatTime(displayTarget)} / <span className="font-bold">{sectionPercent}%</span>
                   </p>
 
                   {section.hasKeywords && (
@@ -560,6 +650,11 @@ export default function ScriptPlanner() {
 
                   {section.hasInterview && (
                     <div className="mb-3 space-y-2">
+                      {episode === 2 && (
+                        <div className="mb-2">
+                          <p className="text-sm font-medium text-orange-700">자동 계산된 목표 시간: {formatTime(interviewDynamicTarget)}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm font-medium text-neutral-700">영상내용:</p>
                         <p className="whitespace-pre-wrap text-sm text-neutral-600">
