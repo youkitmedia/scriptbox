@@ -81,17 +81,25 @@ export default function ScriptPlanner() {
     const LECTURE_TARGET = 720    // #5 본강의 목표: 12분
     const CLOSING_TARGET = 120    // #7 마무리멘트 목표: 2분
     const INTERVIEW_BASE = 500    // #6 전문가 인터뷰 기본: 8분 20초
+    const INTERVIEW_MAX = 600     // #6 최대: 10분
     
     // 실제 작성 시간
     const lectureActual = calculateDuration(scripts[2]["lecture"] || "")
     const closingActual = calculateDuration(scripts[2]["closing"] || "")
     
-    // 목표 대비 초과분 계산 (음수면 0)
+    // 미달분 계산 (목표보다 적게 쓰면 양수)
+    const lectureShortfall = Math.max(0, LECTURE_TARGET - lectureActual)
+    const closingShortfall = Math.max(0, CLOSING_TARGET - closingActual)
+    
+    // 초과분 계산 (목표보다 많이 쓰면 양수)
     const lectureOverflow = Math.max(0, lectureActual - LECTURE_TARGET)
     const closingOverflow = Math.max(0, closingActual - CLOSING_TARGET)
     
-    // 인터뷰 시간 = 기본값 - 초과분들
-    const interviewTarget = INTERVIEW_BASE - lectureOverflow - closingOverflow
+    // 인터뷰 시간 = 기본값 + 미달분들 - 초과분들
+    let interviewTarget = INTERVIEW_BASE + lectureShortfall + closingShortfall - lectureOverflow - closingOverflow
+    
+    // 최대 10분 제한
+    interviewTarget = Math.min(interviewTarget, INTERVIEW_MAX)
     
     return Math.max(0, interviewTarget) // 음수 방지
   }
@@ -501,7 +509,7 @@ export default function ScriptPlanner() {
                             ⚠️ 인터뷰 시간이 5분 미만입니다. #5나 #7을 줄여주세요
                           </p>
                         )}
-                        {interviewDynamicTarget > 600 && (
+                        {interviewDynamicTarget >= 600 && (
                           <p className="text-sm text-amber-600 mt-2 font-medium">
                             ⚠️ 인터뷰 시간이 10분 이상입니다. #5나 #7을 늘려주세요
                           </p>
